@@ -1,0 +1,18 @@
+{
+  "name": "o-aguia-servidor-pagamento",
+  "version": "1.0.0",
+  "description": "Servidor de pagamento Pix (Mercado Pago) do sistema o águia, feito para rodar no Render.",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.1.0"
+  }
+}
