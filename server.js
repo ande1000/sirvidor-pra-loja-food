@@ -14,20 +14,41 @@ app.use(express.json());
 
 /* ---------------- VARIÁVEIS DE AMBIENTE (configuradas no Render, nunca aqui) ---------------- */
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+// Aceita dois formatos pra chave do Firebase, pra facilitar: o JSON colado direto
+// (FIREBASE_SERVICE_ACCOUNT_JSON) ou, se preferir, o mesmo JSON em base64
+// (FIREBASE_SERVICE_ACCOUNT_BASE64). Só uma das duas precisa estar preenchida.
+const FIREBASE_SERVICE_ACCOUNT_JSON = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 const FIREBASE_SERVICE_ACCOUNT_BASE64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 
 if (!MP_ACCESS_TOKEN) {
   console.error("ERRO: variável de ambiente MP_ACCESS_TOKEN não configurada.");
 }
-if (!FIREBASE_SERVICE_ACCOUNT_BASE64) {
-  console.error("ERRO: variável de ambiente FIREBASE_SERVICE_ACCOUNT_BASE64 não configurada.");
+if (!FIREBASE_SERVICE_ACCOUNT_JSON && !FIREBASE_SERVICE_ACCOUNT_BASE64) {
+  console.error("ERRO: configure FIREBASE_SERVICE_ACCOUNT_JSON (ou FIREBASE_SERVICE_ACCOUNT_BASE64).");
 }
 
 /* ---------------- FIREBASE ADMIN (acesso privilegiado ao Firestore) ---------------- */
 function inicializarFirebaseAdmin() {
   if (admin.apps.length) return admin.app();
-  const jsonTexto = Buffer.from(FIREBASE_SERVICE_ACCOUNT_BASE64, "base64").toString("utf8");
-  const credenciais = JSON.parse(jsonTexto);
+
+  let jsonTexto;
+  if (FIREBASE_SERVICE_ACCOUNT_JSON) {
+    jsonTexto = FIREBASE_SERVICE_ACCOUNT_JSON;
+  } else {
+    jsonTexto = Buffer.from(FIREBASE_SERVICE_ACCOUNT_BASE64, "base64").toString("utf8");
+  }
+
+  let credenciais;
+  try {
+    credenciais = JSON.parse(jsonTexto);
+  } catch (erro) {
+    throw new Error(
+      "não consegui ler a credencial do Firebase. Confere se colou o conteúdo " +
+      "completo do arquivo .json (começando com { e terminando com }) na variável " +
+      "FIREBASE_SERVICE_ACCOUNT_JSON, sem cortar nenhum pedaço."
+    );
+  }
+
   return admin.initializeApp({
     credential: admin.credential.cert(credenciais)
   });
